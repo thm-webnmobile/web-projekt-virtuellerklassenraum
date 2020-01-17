@@ -1,0 +1,115 @@
+/* Sidebar */
+.sidebar {
+    height: 100%;
+    background-color: var(--background-color);
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    z-index: 901;
+    border-right: 1px solid var(--border-color);
+}
+@media only screen and (max-width: 1200px) {
+    .sidebar {
+        position: fixed;
+        opacity: 1;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 40%;
+        transition: all .2s;
+    }
+    .sidebar:not(.open) {
+        left: -50%;
+        visibility: hidden;
+    }
+}
+@media only screen and (max-width: 992px) {
+    .sidebar {
+        width: 40%;
+    }
+}
+@media only screen and (max-width: 768px) {
+    .sidebar {
+        width: 60%;
+    }
+}
+@media only screen and (max-width: 576px) {
+    .sidebar {
+        width: 80%;
+    }
+}
+
+/* Sidebar Head */
+.sidebar-head {
+    display: block;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Sidebar Body */
+.sidebar-body {
+    flex: 1;
+    overflow: auto;
+}
+
+/* Sidebar Profile */
+.sidebar-profile {
+    text-align: center;
+    padding-top: 20px;
+}
+.sidebar-profile .sidebar-avatar {
+    height: 100px;
+    width: 100px;
+    display: inline-block;
+    border-radius: 50%;
+    background-color: var(--primary);
+}
+
+/* Sidebar Form */
+.sidebar-form {
+    padding: 20px;
+}
+
+/* Sidebar Rooms */
+.sidebar-rooms {
+    padding: 0;
+}
+.sidebar-rooms ul {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+.sidebar-rooms li {
+    padding: 10px 30px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color .2s ease-in-out;
+}
+.sidebar-rooms li:hover {
+    background-color: var(--light);
+}
+
+/* Sidebar Backdrop */
+.sidebar-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 900;
+    display: none;
+}
+@media only screen and (max-width: 1200px) {
+    .sidebar-backdrop {
+        display: block;
+    }
+    .sidebar-backdrop.open {
+        transition: all .2s;
+        opacity: 1;
+    }
+    .sidebar-backdrop:not(.open) {
+        visibility: hidden;
+        opacity: 0;
+    }
+}
