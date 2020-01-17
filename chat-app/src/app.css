@@ -1,0 +1,86 @@
+/* Root */
+:root {
+    --background-color: #FFF;
+    --border-color: rgba(0, 0, 0, 0.15);
+}
+
+h1,h2,h3,h4,h5,h6 {
+    font-weight: bold !important;
+}
+
+/* Main */
+main {
+    display: flex !important;
+    flex: 1;
+}
+@media only screen and (max-width: 992px) {
+    main {
+        margin-left: 0;
+    }
+}
+@media only screen and (max-width: 768px) {
+    main {
+        margin-left: 0;
+    }
+}
+
+/* Layout */
+.layout {
+    height: calc(var(--vh, 1vh) * 100);
+    display: flex;
+}
+
+/* Overlay */
+.backdrop {
+    position: fixed;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 9999;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0;
+}
+.backdrop.visible {
+    pointer-events: initial;
+}
+.backdrop.visible .backdrop-spinner {
+    position: absolute;
+    left: calc(50% - 50px);
+    top: calc(50% - 50px);
+    height: 100px;
+    width: 100px;
+    margin: 0px auto;
+    border: 8px solid var(--primary);
+    border-top-color: rgba(0, 0, 0, 0);
+    border-radius: 100%;
+    animation: rotation .6s infinite linear;
+}
+
+/* Animation */
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(359deg);
+    }
+}
+
+/* Transitions */
+.fade-in {
+    opacity: 1;
+    transition: opacity 1.0s;
+}
+.fade-out {
+    opacity: 0;
+    transition: opacity 1.0s;
+}
+
+/* SVG */
+.svg {
+    fill: #fff;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+}
