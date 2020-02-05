@@ -20,7 +20,7 @@ class Details extends Component {
             try {
                 var json = JSON.parse(data);
                 
-                self.setState({ title: json.title, content: json.content, clients: json.clients });
+                self.setState({ name: json.name, title: json.title, content: json.content, clients: json.clients });
             } catch (error) {
                 
             }
@@ -28,6 +28,11 @@ class Details extends Component {
     }
 
     render() {
+        var QRCode = require('qrcode.react');
+
+        const qrUrl = "http://192.168.178.45:5001?qr=" + this.state.name;
+        const qrSize = 250;
+
         return (
             <div className={ "detail" + (this.props.open ? " open" : "") }>
                 <div className="detail-head">
@@ -41,6 +46,9 @@ class Details extends Component {
                     </ul>
                 </div>
                 <div className="detail-body">
+                    <div className="qr-code-container">
+                        <QRCode className="qr-code" value={qrUrl} size={qrSize}/>
+                    </div>
                     { this.state.content.flatMap((content, index) => [
                         <div className="detail-content" key={index}>
                             <h6>{content.title}</h6>

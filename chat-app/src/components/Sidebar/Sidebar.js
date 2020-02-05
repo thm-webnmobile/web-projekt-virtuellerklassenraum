@@ -18,10 +18,7 @@ class Sidebar extends Component {
     register(socket) {
         var self = this;
 
-        console.log("register...");
-
         socket.on("rooms", function(data) {
-            console.log("recieveing rooms");
             var rooms = JSON.parse(data);
             self.setState({ rooms: rooms });
         });
@@ -50,16 +47,19 @@ class Sidebar extends Component {
             <aside>
                 <div className={ "sidebar" + (this.props.open ? " open" : "") }>
                     <div className="sidebar-head">
+                        <div className="sidebar-logo">
+                            <span>Virtual Classroom</span>
+                        </div>
                         <div className="sidebar-profile">
-                            <div className="sidebar-avatar"></div>
-                            <h6>Your Profile</h6>
+                            <div className="sidebar-avatar">{ this.props.name.substring(0, 1) }</div>
+                            <h6>{ this.props.name }</h6>
                         </div>
                         <div className="sidebar-form">
                             <Form onSubmit={ this.handleSubmit.bind(this) }>
                                 <InputGroup className="mb-3">
                                     <FormControl name="room" placeholder="Room ID" />
                                 </InputGroup>
-                                <Button type="submit" variant="block">Enter</Button>
+                                <Button type="submit" variant="block" className="btn-primary">Join</Button>
                             </Form>
                         </div>
                     </div>

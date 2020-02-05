@@ -13,6 +13,7 @@ module.exports = internal.Server = class {
     }
 
     handleHandshake(socket, server) {
+        var self = this;
         var address = socket.handshake.address;
 
         var handshake = function() {
@@ -21,7 +22,7 @@ module.exports = internal.Server = class {
             socket.removeAllListeners();
             socket.on("handshake", handshake);
             socket.on("login", function(data) {
-                // Player tries to reconnect
+                // Client tries to reconnect
                 if (data == undefined) {
                     console.log("Handshake [" + address + "]: " + "Client is reconnecting...");
 
@@ -36,7 +37,7 @@ module.exports = internal.Server = class {
                 } else {
                     console.log("Handshake [" + address + "]: " + "Client is connecting...");
 
-                    // Player tries to login
+                    // Client tries to login
                     var request = JSON.parse(data);
 
                     try {
@@ -50,12 +51,22 @@ module.exports = internal.Server = class {
                             var room = server.getRoom(request.room); // Room
 
                             if (room) {
-                                var user = server.registerUser(socket);
-                                user.setName(name);
-                                user.setConnection(socket); // Once a client is connection, we will register every other event
-                                user.getConnection().sendPacket("login", {"state": "SUCCESS", "uuid": user.getUuid() });
-                                user.setRoom(room, true);
+                                // Retrieve data from database and send response to client when callback is executed
+                                self.retrieveUserFromDatabase(socket, name, function(user) {
+                                    user.setConnection(socket);
+                                    user.getConnection().sendPacket("login", {"state": "SUCCESS", "uuid": user.getUuid(), "name": user.getName() });
+
+                                    // We need to set room after login packet
+                                    user.setRoom(room, true); // This function will also send the room packets to the client
+                                });
                             } else {
+                                server.createRoom(request.room);
+                            }
+
+                            room = server.getRoom(request.room);
+
+                            if (!room) {
+                                console.log("Room '" + request.room + "' not found...");
                                 socket.emit("login", JSON.stringify({"state": "INVALID_ROOM_UUID" })); // Room does not exists
                             }
                         }
@@ -73,5 +84,36 @@ module.exports = internal.Server = class {
 
         // If we recieve the handshake, then we listen to all the packets
         socket.on("handshake", handshake);
+    }
+    
+    retrieveUserFromDatabase(socket, name, callback) {
+        // Create default user class
+        var user = this.server.registerUser(socket);
+        user.setName(name);
+
+        var collection = this.server.getDatabase().get().collection('user');
+        var query = { name : name };
+
+        console.log("Searching user in database...");
+        collection.findOne(query, function(error, result) {
+            if (error) throw error;
+
+            if (result) {
+                console.log("User found!");
+                user.loadSnapshot(result);
+                callback(user);
+            } else {
+                console.log("User not found! Insert new user...");
+                collection.insertOne(user.createSnapshot(), function(error, result) {
+                    if (error) throw error;
+
+                    if (result && result.ops && result.ops.length > 0) {
+                        console.log("User inserted!");
+                        user.loadSnapshot(result.ops[0]);
+                        callback(user);
+                    }
+                });
+            }
+        });
     }
 }

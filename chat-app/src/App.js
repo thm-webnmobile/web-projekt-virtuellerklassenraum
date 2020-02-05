@@ -17,6 +17,7 @@ class App extends Component {
             connected: false,
 
             uuid: -1,
+            name: "?",
 
             show: true,
             sidebarOpen: false,
@@ -54,7 +55,7 @@ class App extends Component {
                     // TODO: Handle all the erros and communicate with the client
                     case "SUCCESS":
                         if (json.uuid !== undefined) {
-                            self.setState({ connected: true, show: false, uuid: json.uuid }); 
+                            self.setState({ connected: true, show: false, uuid: json.uuid, name: json.name }); 
                         }
                         break;
                 }
@@ -87,7 +88,15 @@ class App extends Component {
         return (
             <div className="layout">
                 <div className={ (this.state.connected ? "backdrop fade-out" : "backdrop visible fade-in") }>
-                    <span className="backdrop-spinner"></span>
+                    <div className="backdrop-logo">
+                        <h1>Virtual Classroom</h1>
+                        <p>Connecting...</p>
+                    </div>
+                    <div className="backdrop-balls">
+                        <div className="backdrop-ball"></div>
+                        <div className="backdrop-ball"></div>
+                        <div className="backdrop-ball"></div>
+                    </div>
                 </div>
                 <Authenticator 
                     socket={ this.state.socket }
@@ -97,6 +106,7 @@ class App extends Component {
                 </Authenticator>
                 { !this.state.show && <Sidebar 
                     socket={ this.state.socket }
+                    name={ this.state.name }
                     open={ this.state.sidebarOpen } 
                     toggle={ () =>  this.setState({ "sidebarOpen": !this.state.sidebarOpen }) }>
                 </Sidebar> }
@@ -104,7 +114,8 @@ class App extends Component {
                     { !this.state.show && <Board 
                         socket={ this.state.socket }
                         open={ this.state.boardOpen }
-                        close={ () => { this.setState({ "boardOpen": false }) } }>
+                        close={ () => { this.setState({ "boardOpen": false }) } }
+                        uuid={ this.state.uuid }>
                     </Board> }
                     { !this.state.show && <Chat 
                         socket={ this.state.socket }

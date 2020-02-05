@@ -12,7 +12,7 @@
         width: 33%;
     }
 }
-@media only screen and (max-width: 768px) {
+@media only screen and (max-width: 992px) {
     .board {
         position: fixed;
         opacity: 1;
@@ -40,7 +40,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 20px;
-    height: 80px;
+    height: 70px;
     border-bottom: 1px solid var(--border-color);
 }
 .board-head ul {
@@ -73,4 +73,74 @@
 }
 .board-body li:hover {
     background-color: var(--light);
+}
+
+/* BB */
+.bb-avatar {
+    flex-shrink: 0;
+    margin: 0 8px;
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    line-height: 36px;
+    text-align: center;
+    border-radius: 100%;
+    background-color: #f5f6f7;
+    color: #fff;
+}
+.bb-body {
+    margin: 0 0 0 8px;
+    flex: 1;
+}
+.bb-body p {
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out;
+    padding-top: 10px;
+}
+.bb-body:not(.full) p {
+    max-height: 35px;
+    transition: max-height 0.5s ease-in-out;
+    text-overflow: ellipsis;
+    overflow: hidden; 
+    white-space: nowrap;
+    width: 250px
+}
+.bb-name {
+    display: flex;
+    justify-content: space-between;
+}
+.bb-name >* {
+    margin-left: 4px;
+    margin-right: 4px;
+}
+.bb-name >*:last-child {
+    margin-right: 0px;
+}
+.bb-name >*:first-child {
+    margin-left: 0px;
+    flex: 1 1;
+}
+.bb-vote {
+    padding: 5px;
+    width: 40px;
+    height: 20px;
+    border-radius: 8px;
+    text-align: center;
+    line-height: 10px;
+    font-weight: bold;
+    font-size: 16px;
+    color: #fff !important;
+    background-color: var(--primary);
+    transition: opacity 0.2s ease-in-out;
+}
+.bb-vote.own {
+    transform: scale(1.1);
+}
+.bb-vote.up-vote {
+    background-color: var(--primary);
+}
+.bb-vote.down-vote {
+    background-color: var(--gray);
 }

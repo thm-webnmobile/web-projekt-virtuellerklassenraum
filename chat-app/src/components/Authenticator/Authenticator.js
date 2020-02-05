@@ -23,17 +23,30 @@ class Authenticator extends Component {
     }
 
     render() {
+        const windowUrl = window.location.search;
+        const params = new URLSearchParams(windowUrl);
+
+        var room = "ID"
+
+        if (params.has("qr")) {
+            room = params.get("qr");
+        }
+
         return (
             <Modal show={this.props.connected && this.props.show}>
                 <Modal.Body>
+                    <div className="auth-header">
+                        <h1>Virtual Classroom</h1>
+                        <p>Just enter your name and a room.</p>
+                    </div>
                     <Form onSubmit={ this.handleSubmit.bind(this) }>
                         <InputGroup className="mb-3">
                             <FormControl name="name" placeholder="Name" />
                         </InputGroup>
                         <InputGroup className="mb-3">
-                            <FormControl name="room" placeholder="Room ID" />
+                            <FormControl name="room" placeholder="Room ID" defaultValue={room} />
                         </InputGroup>
-                        <Button type="submit">Submit form</Button>
+                        <Button type="submit">Enter Room</Button>
                     </Form>
                 </Modal.Body>
             </Modal>

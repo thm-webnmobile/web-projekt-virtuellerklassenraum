@@ -1,7 +1,7 @@
 /* Sidebar */
 .sidebar {
     height: 100%;
-    background-color: var(--background-color);
+    background-color: var(--background-color-sidebar);
     white-space: nowrap;
     display: flex;
     flex-direction: column;
@@ -51,6 +51,15 @@
     overflow: auto;
 }
 
+/* Sidebar Logo */
+.sidebar-logo {
+    font-size: 20px;
+    text-align: center;
+    height: 70px;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
 /* Sidebar Profile */
 .sidebar-profile {
     text-align: center;
@@ -62,6 +71,13 @@
     display: inline-block;
     border-radius: 50%;
     background-color: var(--primary);
+}
+
+/* Sidebar Avatar */
+.sidebar-avatar {
+    line-height: 100px;
+    font-size: 30px;
+    color: var(--background-color-sidebar);
 }
 
 /* Sidebar Form */

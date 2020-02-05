@@ -12,6 +12,7 @@ module.exports = internal.UserConnection = class {
         socket.on("join", function(data) { self.handleJoin(data) });
         socket.on("chat", function(data) { self.handleChat(data) });
         socket.on("board", function(data) { self.handleBoard(data) });
+        socket.on("paint", function(data) { self.handlePaint(data) });
     }
 
     getUser() {
@@ -33,6 +34,12 @@ module.exports = internal.UserConnection = class {
 
         console.log("User [" + this.user.getUuid() + "]: " + "Disconnect!");
     }
+
+    sendWarning(message) {
+        this.user.getConnection().sendPacket("warning", { "type": "ERROR", "message": message });
+    }
+
+    // Recieve and handle join data
     handleJoin(data) {
         try {
             var json = JSON.parse(data);
@@ -43,27 +50,41 @@ module.exports = internal.UserConnection = class {
                 if (room) {
                     this.user.setRoom(room);
                 } else {
-                    this.user.sendPacket("join", JSON.stringify({ "state": "INVALID_ROOM" }));
+                    this.user.getConnection().sendPacket("join", { "state": "INVALID_ROOM" });
                 }
             }
         } catch (error) {
             console.log(error);
         }
     }
+    // Recieve and handle chat data
     handleChat(data) {
         try {
             var endTime = new Date();
             var timeDiff = endTime - this.time;
             this.time = endTime;
 
-            if (timeDiff > 500) {
+            if (timeDiff > 500 || json.type === "HISTORY") {
                 var json = JSON.parse(data);
-                this.user.getRoom().sendUserMessage(this.user, json.message);
+
+                if (json.type != undefined && json.type === "HISTORY") {
+                    var length = json.size;
+                    this.user.getRoom().sendChatHistory(this.user, length + 10);
+                } else {
+                    if (json.message.length < 5) {
+                        this.sendWarning("Message is to short");
+                    } else {
+                        this.user.getRoom().sendUserMessage(this.user, json.message);
+                    }
+                }
+            } else {
+                this.sendWarning("Please wait befor sending a new message...");
             }
         } catch (error) {
             console.log(error);
         }
     }
+    // Recieve and handle board data
     handleBoard(data) {
         try {
             var room = this.user.getRoom();
@@ -71,14 +92,18 @@ module.exports = internal.UserConnection = class {
             if (room != undefined) {
                 var json = JSON.parse(data);
 
-                console.log(json.type);
-
                 switch(json.type) {
                     case "ADD":
-                        room.getBoard().addMessage(json.position);
+                        room.getBoard().addMessage(this.user.getUuid(), json.position);
                         break;
                     case "REMOVE":
-                        room.getBoard().removeMessage(json.position);
+                        room.getBoard().removeMessage(this.user.getUuid(), json.position);
+                        break;
+                    case "UP_VOTE":
+                        room.getBoard().upVote(this.user.getUuid(), json.position);
+                        break;
+                    case "DOWN_VOTE":
+                        room.getBoard().downVote(this.user.getUuid(), json.position);
                         break;
                 }
             }
@@ -87,6 +112,32 @@ module.exports = internal.UserConnection = class {
         }
     }
 
+    handlePaint(data) {
+        try {
+            var room = this.user.getRoom();
+
+            room.getUserUuids().forEach(function(uuid) {
+                var user = room.getServer().findUser(uuid);
+                
+                // Send only packet to player that is in this room
+                if (user && user.insideRoom(room)) {
+                    user.getConnection().sendRawPacket("paint", data);
+                }
+            });
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    // Main function for sending data
+    sendRawPacket(channel, rawData) {
+        try {
+            this.socket.emit(channel, rawData);
+            console.log("Sending raw packet... " + channel);
+        } catch (error) {
+            console.log(error);
+        }
+    }
     sendPacket(channel, data) {
         try {
             var json = JSON.stringify(data);
