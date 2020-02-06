@@ -10,7 +10,8 @@ import Button from "react-bootstrap/Button";
             this.endPaintEvent = this.endPaintEvent.bind(this);
 
             this.state = {
-                color: 'rgba(0, 250, 0, 0.5)'
+                color: 'rgba(0, 250, 0, 0.5)',
+                width: 3
             }
 
             this.isPainting = false;
@@ -41,9 +42,6 @@ import Button from "react-bootstrap/Button";
                 "#c0392b"
             ];
 
-            this.userStrokeStyle = this.colors[0];
-            this.guestStrokeStyle = this.colors[1];
-
             this.register(props.socket);
         }
 
@@ -53,15 +51,27 @@ import Button from "react-bootstrap/Button";
             socket.on("paint", function(data) {
                 try {
                     var json = JSON.parse(data);
-                    console.log("GETTING PINT");
-                    console.log(json);
-                    console.log("---------");
-                    console.log(json.line);
 
                     for (var i = 0; i < json.line.length; i++) {
                         var line = json.line[i];
 
-                        self.paint(line.start, line.stop, self.guestStrokeStyle);
+                        self.paint(line.start, line.stop, line.color, line.width);
+                    }
+                } catch(error) {
+                    console.log(error);
+                }
+            });
+
+            socket.on("canvas", function(data) {
+                try {
+                    var json = JSON.parse(data);
+
+                    switch(json.type) {
+                        case 'RESET':
+                            if (self.ctx && self.canvas) {
+                                self.ctx.clearRect(0, 0, self.canvas.width, self.canvas.height);
+                            }
+                            break;
                     }
                 } catch(error) {
                     console.log(error);
@@ -70,27 +80,55 @@ import Button from "react-bootstrap/Button";
         }
 
         onMouseDown({ nativeEvent }) {
-            nativeEvent.preventDefault();
-            const { offsetX, offsetY } = nativeEvent;
-            this.isPainting = true;
-            this.prevPos = { offsetX, offsetY };
+            try {
+                var rect = nativeEvent.target.getBoundingClientRect();
+
+                const offsetX = nativeEvent.offsetX || nativeEvent.touches[0].pageX - rect.left;
+                const offsetY = nativeEvent.offsetY || nativeEvent.touches[0].pageY - rect.top;
+
+                this.isPainting = true;
+                this.prevPos = { offsetX, offsetY };
+
+                if (nativeEvent.offsetX && nativeEvent.offsetY) {
+                    nativeEvent.preventDefault();
+                }
+
+                nativeEvent.stopImmediatePropagation();
+            } catch (error) {
+                console.log(error);
+            }
         }
 
         onMouseMove({ nativeEvent }) {
-            nativeEvent.preventDefault();
-            if (this.isPainting) {
-                const { offsetX, offsetY } = nativeEvent;
-                const offSetData = { offsetX, offsetY };
-            
-                // Set the start and stop position of the paint event.
-                const positionData = {
-                    start: { ...this.prevPos },
-                    stop: { ...offSetData },
-                };
-            
-                // Add the position to the line array
-                this.line = this.line.concat(positionData);
-                this.paint(this.prevPos, offSetData, this.userStrokeStyle);
+            try {
+                if (this.isPainting) {
+                    var rect = nativeEvent.target.getBoundingClientRect();
+
+                    const offsetX = nativeEvent.offsetX || nativeEvent.touches[0].pageX - rect.left;
+                    const offsetY = nativeEvent.offsetY || nativeEvent.touches[0].pageY - rect.top;
+                    
+                    const offSetData = { offsetX, offsetY };
+                
+                    // Set the start and stop position of the paint event.
+                    const positionData = {
+                        start: { ...this.prevPos },
+                        stop: { ...offSetData },
+                        color: this.state.color,
+                        width: this.state.width
+                    };
+                
+                    // Add the position to the line array
+                    this.line = this.line.concat(positionData);
+                    this.paint(this.prevPos, offSetData, this.state.color, this.state.width);
+                }
+ 
+                nativeEvent.stopImmediatePropagation();
+
+                if (nativeEvent.offsetX && nativeEvent.offsetY) {
+                    nativeEvent.preventDefault();
+                }
+            } catch (error) {
+                console.log(error);
             }
         }
 
@@ -101,13 +139,14 @@ import Button from "react-bootstrap/Button";
             }
         }
 
-        paint(prevPos, currPos, strokeStyle) {
+        paint(prevPos, currPos, color, width) {
             const { offsetX, offsetY } = currPos;
             const { offsetX: x, offsetY: y } = prevPos;
 
             this.ctx.beginPath();
-            this.ctx.strokeStyle = strokeStyle;
-            
+            this.ctx.strokeStyle = color;
+            this.ctx.lineWidth = width;
+
             // Move the the prevPosition of the mouse
             this.ctx.moveTo(x, y);
             
@@ -126,6 +165,8 @@ import Button from "react-bootstrap/Button";
             };
 
             this.props.socket.emit("paint", JSON.stringify(body));
+
+            this.line = [];
         }
 
         componentDidMount() {
@@ -135,22 +176,32 @@ import Button from "react-bootstrap/Button";
             this.ctx = this.canvas.getContext('2d');
             this.ctx.lineJoin = 'round';
             this.ctx.lineCap = 'round';
-            this.ctx.lineWidth = 5;
+            this.ctx.lineWidth = this.state.width;
         }
 
         setColor(color) {
-            this.userStrokeStyle = color;
             this.setState({ color: color });
         }
 
+        setWidth(width) {
+            this.setState({ width: width });
+        }
+
         resetPainting() {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            if (this.canvas) {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                this.props.socket.emit("canvas", JSON.stringify({
+                    "type": "RESET"
+                }));
+            }
         }
 
         sendPainting() {
             this.props.toggle();
 
             var image = this.canvas.toDataURL("image/png");
+            
             this.resetPainting();
 
             this.props.socket.emit("chat", JSON.stringify({
@@ -165,8 +216,8 @@ import Button from "react-bootstrap/Button";
                     <div className="tool-palette">
                         <div className="tool-box">
                             <div className="tool">
-                                <svg id="pencil-svg" className="tool-button" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-                                    <g fill="none" fill-rule="evenodd">
+                                <svg id="pencil-svg" onClick={ () => this.setWidth(2) } className="tool-button" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                                    <g fill="none" fillRule="evenodd">
                                         <path className="pencil-tip" fill={ this.state.color } d="M95.37 16.765A.777.777 0 0 0 96 16a.777.777 0 0 0-.63-.765L89.418 13a10.989 10.989 0 0 0 0 6l5.953-2.235z"></path>
                                         <path className="pencil-collar" d="M67.133 5l1.5 2.422c.212.378.102.792-.156 1.098 0 0-1.435 1.76-2.18 2.389a.77.77 0 0 0-.213.961l2.15 3.43a1.544 1.544 0 0 1 .002 1.4l-2.152 3.43a.77.77 0 0 0 .217.962c.754.62 2.176 2.388 2.176 2.388.258.307.368.72.156 1.098L67.133 27l15.038-5.486 5.882-2.13.947-.343a10.766 10.766 0 0 1 0-6.079l-.947-.343-5.882-2.13L67.133 5z"></path>
                                         <path className="pencil-dark-handle" d="M66.7 20.115l2.132-3.418h.002a1.545 1.545 0 0 0 0-1.394h-.002L66.7 11.885a.77.77 0 0 1 .133-.885H4v10h62.833a.77.77 0 0 1-.133-.885"></path>
@@ -175,8 +226,8 @@ import Button from "react-bootstrap/Button";
                                 </svg>
                             </div>
                             <div className="tool">
-                                <svg id="marker-svg" className="tool-button" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-                                    <g fill="none" fill-rule="evenodd">
+                                <svg id="marker-svg" onClick={ () => this.setWidth(6) } className="tool-button" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                                    <g fill="none" fillRule="evenodd">
                                         <path className="marker-dark-handle" d="M58.903 29.146l-.04-.232a56.35 56.35 0 0 1-.096-.584l-.04-.256a75.309 75.309 0 0 1-.123-.845 55.045 55.045 0 0 1-.113-.865c-.154-1.237-.28-1.984-.376-3.364H4v6.953h54.766c.095 0 .188-.014.28-.035-.05-.252-.097-.51-.143-.772z"></path>
                                         <path className="marker-light-handle" d="M58.125 9.531a87.665 87.665 0 0 0-.21 4.744l-.003.231a96.894 96.894 0 0 0 0 3.059l.003.234c.009.494.021.983.037 1.466l.006.14c.036 1.036.089 2.617.157 3.595H4V2h54.766c.105 0 .208.018.308.044-.05.251-.098.51-.145.772l-.04.232c-.033.191-.066.384-.098.58l-.042.268a72.302 72.302 0 0 0-.126.849l-.09.663-.026.205c-.034.27-.066.543-.098.82l-.009.076a75.61 75.61 0 0 0-.275 3.022z"></path>
                                         <path className="marker-tip" fill={ this.state.color } d="M89.184 19.626c1.021 0 2.03-.216 2.95-.633l4.1-1.857a1.24 1.24 0 0 0 0-2.292l-4.101-1.858a7.135 7.135 0 0 0-2.95-.616H84.61v7.256h4.575z"></path>
@@ -187,12 +238,12 @@ import Button from "react-bootstrap/Button";
                             </div>
                             <div className="tool" onClick={ this.resetPainting.bind(this)  }>
                                 <svg id="eraser-svg" className="tool-button" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-                                    <g fill="none" fill-rule="evenodd">
+                                    <g fill="none" fillRule="evenodd">
                                         <path className="eraser-tip eraser-shadow" d="M91.256 19.824h-15.39A158.925 158.925 0 0 1 75.5 27.5h16.593c2.394 0 4.407-5.58 4.407-12.463 0-1.603-.077-3.13-.211-4.537-.703 5.36-3.075 9.324-5.033 9.324"></path>
                                         <path className="eraser-tip" d="M91.175 21.5c2.07 0 4.582-4.136 5.325-9.73-.47-4.838-1.906-8.27-4.44-8.27H74.5c.284 3.811.448 8.256.448 13.005 0 1.71-.021 3.38-.061 4.995h16.288z"></path>
                                         <path className="eraser-handle" d="M3.5 3.5v24h76v-24z"></path>
                                         <path className="eraser-shadow" d="M52 27.5H3.5v-6h76v6H52z"></path>
-                                        <path className="eraser-ferrule" d="M71.3 27.5s.497-3.903.497-12-.497-12-.497-12M67.7 27.5s.497-3.903.497-12-.497-12-.497-12M64.003 27.5s.497-3.903.497-12-.497-12-.497-12M60.003 27.5s.497-3.903.497-12-.497-12-.497-12" stroke-width=".817" stroke-linecap="round" stroke-linejoin="round">
+                                        <path className="eraser-ferrule" d="M71.3 27.5s.497-3.903.497-12-.497-12-.497-12M67.7 27.5s.497-3.903.497-12-.497-12-.497-12M64.003 27.5s.497-3.903.497-12-.497-12-.497-12M60.003 27.5s.497-3.903.497-12-.497-12-.497-12" strokeWidth=".817" strokeLinecap="round" strokeLinejoin="round">
                                         </path>
                                     </g>
                                 </svg>

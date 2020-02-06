@@ -92,6 +92,7 @@
 .bb-body {
     margin: 0 0 0 8px;
     flex: 1;
+    overflow: hidden;
 }
 .bb-body p {
     max-height: 1000px;

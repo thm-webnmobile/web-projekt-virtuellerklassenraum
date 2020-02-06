@@ -30,7 +30,7 @@ class Details extends Component {
     render() {
         var QRCode = require('qrcode.react');
 
-        const qrUrl = "http://192.168.178.45:5001?qr=" + this.state.name;
+        const qrUrl = "http://" + window.location.host.split(':')[0] + ":5001?qr=" + this.state.name;
         const qrSize = 250;
 
         return (

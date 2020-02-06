@@ -1,4 +1,5 @@
 const UserConnection = require('./UserConnection');
+const Canvas = require('./Canvas');
 
 const internal = {};
 
@@ -6,7 +7,7 @@ module.exports = internal.User = class {
     constructor(server) {
         this.server = server;
         this.rooms = [];
- 
+     
         console.log("Create user");
     }
 
@@ -21,6 +22,13 @@ module.exports = internal.User = class {
     setUuid(uuid) {
         this.uuid = uuid;
     }
+
+    getCanvasUuid() {
+        return this.canvasUuid;
+    }
+    setCanvasUuid(canvasUuid) {
+        this.canvasUuid = canvasUuid;
+    } 
 
     // Connection
     setConnection(socket) {
@@ -66,7 +74,6 @@ module.exports = internal.User = class {
         
         if (this.room != undefined && this.room != null) {
             // Add room to history
-            console.log();
 
             var alreadyInside = false;
 

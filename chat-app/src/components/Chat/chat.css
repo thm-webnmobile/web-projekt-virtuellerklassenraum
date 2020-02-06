@@ -67,8 +67,29 @@
     overflow-y: scroll;
     transition: filter 0.5s ease-in-out;
 }
+.canvas-open .chat-body-content {
+    pointer-events: none;
+}
+.canvas-open .messages {
+    filter: blur(5px);
+}
 .chat-body.fetching {
     opacity: 1;
+}
+.chat-overlay {
+    position: sticky;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: none;
+    background-color: rgba(0, 0, 0, 0);
+    transition: background-color 0.2s ease;
+    z-index: 5;
+}
+.canvas-open .chat-overlay {
+    display: block;
+    background-color: rgba(255, 255, 255, 0.5);
 }
 /* Chat Slideout */
 .chat-slideout {
@@ -152,14 +173,19 @@
     border-top: 1px solid var(--border-color);
     background-color: var(--background-color-chat);
     position: absolute;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    bottom: 40px;
+    transform: translate(-50%, -25%);
     height: 300px;
-    box-shadow: 0px 10px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 0px 50px rgba(0, 0, 0, 0.2);
     border-radius: 4px;
     border: 1px solid var(--border-color);
     overflow: hidden;
+    z-index: 10;
+    transition: all .2s ease-in-out;
+}
+.chat-canvas.open {
+    transform: translate(-50%, -50%);
 }
 .chat-canvas-container {
     overflow-y: scroll;
@@ -338,6 +364,11 @@ input:checked + label {
     text-align: center;
     border-radius: 100%;
     color: #fff;
+    cursor: pointer;
+    transition: opacity .2s ease;
+}
+.message-avatar .avatar .avatar-title:hover {
+    opacity: 0.5;
 }
 .message.right .message-avatar {
     flex-direction: row-reverse;

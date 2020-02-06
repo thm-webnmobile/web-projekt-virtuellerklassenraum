@@ -1,6 +1,7 @@
 const ServerConnection = require('./ServerConnection');
 const Room = require('./Room');
 const User = require('./User');
+const Canvas = require('./Canvas');
 
 const internal = {};
 
@@ -10,6 +11,7 @@ module.exports = internal.Server = class {
         this.connection = new ServerConnection(this, io);
         this.rooms = [];
         this.users = [];
+        this.canvas = [];
 
         this.loadRoomsFromDatabase();
 
@@ -41,6 +43,21 @@ module.exports = internal.Server = class {
     }
     getConfig() {
         return this.config;
+    }
+
+    getCanvas(uuid) {
+        if (this.canvas[uuid] == undefined) {
+            this.canvas[uuid] = new Canvas(this, uuid);
+        }
+
+        return this.canvas[uuid];
+    }
+    createCanvas(uuid) {
+        if (this.canvas[uuid] == undefined) {
+            this.canvas[uuid] = new Canvas(this, uuid);
+        }
+
+        return this.canvas[uuid];
     }
 
     // Rooms
@@ -85,6 +102,9 @@ module.exports = internal.Server = class {
         return this.rooms;
     }
 
+    getUsers() {
+        return this.users;
+    }
     // This will get the user by its uuid. User can be offline.
     findUser(uuid) {
         // Loop backwards to prevent modification crashs

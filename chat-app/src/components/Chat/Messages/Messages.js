@@ -10,7 +10,7 @@ function UserMessage(props) {
     return (
         <div className={ (props.uuid == props.message.uuid ? "message right" : "message") }>
             <div className="message-avatar">
-                <div className="avatar" style={{ backgroundColor: props.color }}><span className="avatar-title">{props.message.name.charAt(0)}</span></div>
+                <div className="avatar" style={{ backgroundColor: props.color }}><span className="avatar-title" onClick={ function() { props.socket.emit("canvas", JSON.stringify({ "type": "JOIN", "uuid": props.message.uuid })) } }>{props.message.name.charAt(0)}</span></div>
                 <div>
                     <div className="name" style={{ color: props.color }}><b>{props.message.name}</b></div>
                     <div className="time"><i><time>{props.message.time}</time></i></div>

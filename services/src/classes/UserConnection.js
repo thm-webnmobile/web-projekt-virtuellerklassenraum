@@ -12,6 +12,7 @@ module.exports = internal.UserConnection = class {
         socket.on("join", function(data) { self.handleJoin(data) });
         socket.on("chat", function(data) { self.handleChat(data) });
         socket.on("board", function(data) { self.handleBoard(data) });
+        socket.on("canvas", function(data) { self.handleCanvas(data) });
         socket.on("paint", function(data) { self.handlePaint(data) });
     }
 
@@ -112,18 +113,45 @@ module.exports = internal.UserConnection = class {
         }
     }
 
+    handleCanvas(data) {
+        try {
+            var json = JSON.parse(data);
+
+            if (json.type) {
+                var canvas = this.user.getServer().getCanvas(this.user.getCanvasUuid());
+                
+                switch(json.type) {
+                    case "JOIN":
+                        if (json.uuid) {
+                            var canvasNew = this.user.getServer().getCanvas(json.uuid);
+
+                            if (canvasNew) {
+                                canvas.leave(this.user);
+                                canvasNew.join(this.user);
+                            }
+
+                        }
+                        break;
+                    case "LEAVE":
+                        canvas.leave(this.user);
+                        break;
+                    case "RESET":
+                        canvas.reset();
+                        break;
+                }
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     handlePaint(data) {
         try {
-            var room = this.user.getRoom();
+            var canvas = this.user.getServer().getCanvas(this.user.getCanvasUuid());
 
-            room.getUserUuids().forEach(function(uuid) {
-                var user = room.getServer().findUser(uuid);
-                
-                // Send only packet to player that is in this room
-                if (user && user.insideRoom(room)) {
-                    user.getConnection().sendRawPacket("paint", data);
-                }
-            });
+            if (canvas) {
+                canvas.send(data);
+            }
         } catch (error) {
             console.log(error)
         }

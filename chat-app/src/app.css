@@ -14,6 +14,10 @@
     --gray: #ced4da !important;
 }
 
+.canvas {
+    touch-action: none !important;
+}
+
 /* Customize Scrollbar */
 body::-webkit-scrollbar {
     background-color: #fff !important;
@@ -31,22 +35,22 @@ body::-webkit-scrollbar-thumb {
     overflow-y: scroll !important;
     scrollbar-color: #0A4C95 #C2D2E4 !important;
   }
-  .scroll {
+.scroll {
     width: 30%;
     height: 100px;
     border: 1px solid grey;
     overflow: scroll;
     display: inline-block;
-  }
-  .scroll-width-auto {
+}
+.scroll-width-auto {
     scrollbar-width: auto;
-  }
-  .scroll-width-thin {
+}
+.scroll-width-thin {
     scrollbar-width: thin;
-  }
-  .scroll-width-none {
+}
+.scroll-width-none {
     scrollbar-width: none;
-  }
+}
 
 /* Override Bootstrap */
 .btn-primary {

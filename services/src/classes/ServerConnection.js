@@ -58,6 +58,9 @@ module.exports = internal.Server = class {
 
                                     // We need to set room after login packet
                                     user.setRoom(room, true); // This function will also send the room packets to the client
+                                    
+                                    var canvas = server.createCanvas(user.getUuid());
+                                    canvas.join(user);
                                 });
                             } else {
                                 server.createRoom(request.room);

@@ -1,4 +1,5 @@
 const Board = require('./Board');
+const Canvas = require('./Canvas');
 
 const internal = {};
 
@@ -189,6 +190,25 @@ module.exports = internal.Room = class {
                 user.getConnection().sendPacket(channel, data);
             }
         });
+    }
+
+    updateCanvas(user) {
+        
+    }
+
+    joinCanvas(canvasUuid, user) {
+        if (this.canvas[canvasUuid] == undefined) {
+            this.canvas[canvasUuid] = new Canvas(this.server);
+            console.log("CREATE CANVAS!");
+        }
+
+        this.canvas[canvasUuid].join(user);
+        console.log("User joined canvas!");
+    }
+    leaveCanvas(canvasUuid, user) {
+        if (this.canvas[canvasUuid] != undefined) {
+            this.canvas[canvasUuid].leave(user);
+        }
     }
     
     // This will send every client the room details

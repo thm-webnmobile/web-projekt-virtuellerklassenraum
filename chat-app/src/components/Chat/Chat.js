@@ -27,6 +27,7 @@ class Chat extends Component {
             historyFull: false,
             message: '',
             warning: null,
+            uuid: props.uuid
         }
 
         this.scrollBox = React.createRef();
@@ -87,6 +88,24 @@ class Chat extends Component {
             try {
                 var json = JSON.parse(data);
                 self.showWarning(json);
+            } catch(error) {
+                console.log(error);
+            }
+        });
+
+        socket.on("canvas", function(data) {
+            try {
+                var json = JSON.parse(data);
+
+                if (json.type) {
+                    switch(json.type) {
+                        case "OPEN":
+                            if (json.uuid != self.state.uuid) {
+                                self.setState({ canvas: true });
+                            }
+                            break;
+                    }
+                }
             } catch(error) {
                 console.log(error);
             }
@@ -158,6 +177,12 @@ class Chat extends Component {
     }
 
     toggleCanvas() {
+        if (this.state.canvas) {
+            this.props.socket.emit("canvas", JSON.stringify({
+                "type": "LEAVE"
+            }));
+        }
+
         this.setState({ canvas: !this.state.canvas });
     }
 
@@ -189,7 +214,7 @@ class Chat extends Component {
 
     render() {
         return (
-            <div className="chat">
+            <div className={ this.state.canvas ? "chat canvas-open": "chat" }>
                 <div className="chat-head">
                     <div className="chat-head-title">
                         <span><b>Chat { this.state.name }</b></span>
@@ -215,20 +240,23 @@ class Chat extends Component {
                     </div>
                 </div>
                 <div className={ this.state.fetching ? 'chat-body fetching' : 'chat-body' } ref={ this.scrollBox }>
-                    <div className={ this.state.warning == null ? 'chat-warning' : 'chat-warning open' }><span>{ this.state.warning }</span></div>
-                    <div className={ this.state.fetching ? 'fetcher visible': 'fetcher' }>
-                        <div className="fetcher-balls">
-                            <div className="fetcher-ball"></div>
-                            <div className="fetcher-ball"></div>
-                            <div className="fetcher-ball"></div>
+                    <div className="chat-overlay" onClick={ this.toggleCanvas.bind(this) }></div>
+                    <div className="chat-body-content">
+                        <div className={ this.state.warning == null ? 'chat-warning' : 'chat-warning open' }><span>{ this.state.warning }</span></div>
+                        <div className={ this.state.fetching ? 'fetcher visible': 'fetcher' }>
+                            <div className="fetcher-balls">
+                                <div className="fetcher-ball"></div>
+                                <div className="fetcher-ball"></div>
+                                <div className="fetcher-ball"></div>
+                            </div>
                         </div>
+                        <Messages 
+                            uuid={ this.props.uuid }
+                            messages={ this.state.messages }
+                            socket={ this.props.socket } 
+                        />
+                        <div ref={ this.scrollBoxEnd }></div>
                     </div>
-                    <Messages 
-                        uuid={ this.props.uuid }
-                        messages={ this.state.messages }
-                        socket={ this.props.socket } 
-                    />
-                    <div ref={ this.scrollBoxEnd }></div>
                 </div>
                 <div className={ this.state.slideout ? 'chat-slideout open' : 'chat-slideout' }>
                     <div className="emojis">

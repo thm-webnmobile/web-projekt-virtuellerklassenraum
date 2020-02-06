@@ -3,57 +3,74 @@ const Board = require('./Board');
 const internal = {};
 
 module.exports = internal.Canvas = class {
-    constructor(server) {
+    constructor(server, uuid) {
+        this.uuid = uuid;
         this.server = server;
         this.userUuids = [];
         this.lines = [];
     }
 
+    getUuid() {
+        return this.uuid;
+    }
+
     join(user) {
-        this.userUuids.push(user.getUuid());
-        this.sendLine(this.lines, user);
+        user.setCanvasUuid(this.uuid);
+        user.getConnection().sendPacket("canvas", { "type": "RESET", "uuid": this.uuid });
+
+        if (this.userUuids.indexOf(user.getUuid()) == -1) {
+            this.userUuids.push(user.getUuid()); 
+        }
+
+        for (var i = 0; i <this.lines.length; i++) {
+            user.getConnection().sendRawPacket("paint", this.lines[i]);
+        }
+
+        if (this.uuid != user.getUuid()) {
+            user.getConnection().sendPacket("canvas", { "type": "OPEN", "uuid": this.uuid });
+        }
     }
 
     leave(user) {
-       var index = this.userUuids.indexOf(user.getUuid());
+        var canvas = this.server.createCanvas(user.getUuid());
+        canvas.join(user);
+    
+        var index = this.userUuids.indexOf(user.getUuid());
 
-       if (index != -1) {
+        if (index != -1) {
            this.userUuids.splice(index, 1);
-       }
-    }
-
-    drawLine(line) {
-        this.lines.push(line);
-
-        this.sendLine();
-    }
-
-    sendLine(lines, user = undefined) {
-        if (user == undefined) {
-            for (var i in lines) {
-                this.notify("draw", { "line": lines[i] });
-            }
-        } else {
-            for (var i in lines) {
-                user.getConnection().sendPacket("draw", { "lines": lines[i] });
-            }
         }
     }
 
-    notify(channel, data) {
-        if (this.lastUpdate == -1) {
-            this.lastUpdate = new Date();
-        }
+    reset() {
+        this.lines = [];
 
         var self = this;
 
         this.userUuids.forEach(function(uuid) {
             var user = self.server.findUser(uuid);
-            
-            // Send only packet to player that is watching this canvas
-            if (user) {
-                user.getConnection().sendPacket(channel, data);
+
+            if (user && user.getCanvasUuid() == self.uuid) {
+                user.getConnection().sendPacket("canvas", { "type": "RESET", "uuid": self.uuid });
             }
-        })
+        });
+    }
+
+    send(data, user = undefined) {
+        this.lines.push(data);
+
+        this.notify("paint", data);
+    }
+
+    notify(channel, data) {
+        var self = this;
+
+        this.userUuids.forEach(function(uuid) {
+            var user = self.server.findUser(uuid);
+
+            if (user && user.getCanvasUuid() == self.uuid) {
+                user.getConnection().sendRawPacket(channel, data);
+            }
+        });
     }
 }
